@@ -5,6 +5,7 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
@@ -12,6 +13,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["./**/*.ts", "./**/*.tsx", "./tests/**/*.ts"],
+  "include": ["./**/*.ts", "./**/*.tsx", "./tests/**/*.ts", "./react-env.d.ts"],
   "exclude": ["node_modules"]
 }

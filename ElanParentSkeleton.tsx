@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "./constants";
+import { hexToRgba } from "./parent-accent-theme";
 
 export type ElanParentSkeletonVariant = "prof" | "student" | "generic";
 
@@ -8,7 +9,40 @@ type ElanParentSkeletonProps = {
   variant?: ElanParentSkeletonVariant;
   minHeight?: number;
   className?: string;
+  /** Brand accent (`#rrggbb`) for the centered loader ring. */
+  accent?: string;
 };
+
+type ElanAccentLoaderProps = {
+  accent: string;
+  className?: string;
+};
+
+/** Centered spinner using the parent brand accent. */
+export function ElanAccentLoader({ accent, className }: ElanAccentLoaderProps) {
+  const track = hexToRgba(accent, 0.22);
+  const glow = hexToRgba(accent, 0.14);
+
+  return (
+    <div className={cn("flex flex-col items-center gap-3", className)} aria-hidden>
+      <div className="relative flex h-14 w-14 items-center justify-center">
+        <div
+          className="absolute inset-0 rounded-full animate-pulse"
+          style={{
+            background: `radial-gradient(circle, ${glow} 0%, transparent 72%)`,
+          }}
+        />
+        <div
+          className="relative h-10 w-10 animate-spin rounded-full border-[3px] border-solid"
+          style={{ borderColor: track, borderTopColor: accent }}
+        />
+      </div>
+      <span className="text-sm font-medium tracking-wide" style={{ color: accent }}>
+        Chargement…
+      </span>
+    </div>
+  );
+}
 
 function Pulse({ className }: { className?: string }) {
   return (
@@ -78,6 +112,7 @@ export function ElanParentSkeleton({
   variant = "generic",
   minHeight = 400,
   className,
+  accent,
 }: ElanParentSkeletonProps) {
   const body =
     variant === "student" ? (
@@ -100,7 +135,12 @@ export function ElanParentSkeleton({
       aria-busy="true"
       aria-label="Chargement"
     >
-      {body}
+      <div className={cn("min-h-full", accent && "opacity-35")}>{body}</div>
+      {accent ? (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <ElanAccentLoader accent={accent} />
+        </div>
+      ) : null}
       <p className="sr-only">Chargement…</p>
     </div>
   );

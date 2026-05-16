@@ -9,6 +9,7 @@ export { elanProxiedPath } from "./paths";
 export { elanProxyRewrites, type ElanProxyRewrite } from "./rewrites";
 export { ElanIframe, type ElanIframeProps } from "./ElanIframe";
 export {
+  ElanAccentLoader,
   ElanParentSkeleton,
   skeletonVariantFromSnapshot,
   type ElanParentSkeletonVariant,

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { cn, elanButtonClass } from "./constants";
+import { cn, elanButtonClass, SITE_BRAND_ACCENT } from "./constants";
 import { isErrorPageDocument } from "./errorDetection";
 import { iframePostMessageTargetOrigin, postAccentThemeToIframe } from "./parent-accent-theme";
 import {
@@ -177,6 +177,8 @@ export function ElanIframe({
 
   const showIframe = phase !== "error";
   const showParentSkeleton = showSkeleton && phase === "loading";
+  const loaderAccent =
+    resolveEmbedAccent(initialAccent, embedSnapshot) ?? SITE_BRAND_ACCENT;
   const resolvedSkeletonVariant =
     skeletonVariant ??
     skeletonVariantFromSnapshot(embedSnapshot?.role, embedSnapshot?.landingPath);
@@ -333,7 +335,11 @@ export function ElanIframe({
       ) : null}
 
       {showParentSkeleton ? (
-        <ElanParentSkeleton variant={resolvedSkeletonVariant} minHeight={minHeight} />
+        <ElanParentSkeleton
+          variant={resolvedSkeletonVariant}
+          minHeight={minHeight}
+          accent={loaderAccent}
+        />
       ) : null}
     </div>
   );

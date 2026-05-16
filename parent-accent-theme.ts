@@ -1,6 +1,14 @@
 /** Must match Élan `ThemeMessageBridge` (`loop:set-theme`). */
 export const LOOP_MSG_SET_THEME = "loop:set-theme" as const;
 
+export function hexToRgba(hex: string, alpha: number): string {
+  const num = parseInt(hex.slice(1), 16);
+  const r = (num >> 16) & 0xff;
+  const g = (num >> 8) & 0xff;
+  const b = num & 0xff;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function darkenHex(hex: string, amount = 20): string {
   const num = parseInt(hex.slice(1), 16);
   const r = Math.max(0, ((num >> 16) & 0xff) - amount);
