@@ -1,25 +1,55 @@
 # Publish to GitHub
 
-The repo is initialized locally on branch `main` with an initial commit.
+The repo is initialized locally on branch `main` with an initial commit. Remote: `git@github.com:mariusLSR1/elan-parent-integration.git`.
+
+## Windows: `gh` not found?
+
+GitHub CLI is installed at `C:\Program Files\GitHub CLI\gh.exe`. Existing terminals opened **before** install do not see it on `PATH`.
+
+**Option A — refresh PATH in the current PowerShell session:**
+
+```powershell
+$env:Path += ";C:\Program Files\GitHub CLI"
+gh --version
+```
+
+**Option B — call `gh` by full path (no PATH change):**
+
+```powershell
+& "C:\Program Files\GitHub CLI\gh.exe" --version
+```
+
+Then close and reopen the terminal (or restart Cursor) so `gh` works everywhere.
 
 ## One-time: log in to GitHub CLI
 
-```bash
+```powershell
+cd path\to\elan-parent-integration
 gh auth login
+# or: & "C:\Program Files\GitHub CLI\gh.exe" auth login
 ```
 
-## Create the remote repository and push
+Choose: GitHub.com → HTTPS or SSH → authenticate in the browser.
 
-From this folder:
+## Create the remote repository and push (with gh)
 
-```bash
+```powershell
 gh repo create elan-parent-integration --public --source=. --remote=origin --push
 ```
 
-If the repo already exists on GitHub:
+If `origin` already exists (this repo), create the empty repo then push:
 
-```bash
-git remote add origin git@github.com:mariusLSR1/elan-parent-integration.git
+```powershell
+gh repo create mariusLSR1/elan-parent-integration --public
+git push -u origin main
+```
+
+## Without gh (Git only)
+
+1. Open https://github.com/new → name `elan-parent-integration` → Public → **do not** add README.
+2. From this folder:
+
+```powershell
 git push -u origin main
 ```
 
