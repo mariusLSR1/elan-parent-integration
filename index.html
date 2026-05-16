@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test iframe Élan</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --accent: #ca2a3f;
+        --border: #e5e7eb;
+        --muted: #6b7280;
+        --panel: #ffffff;
+        --page: #f9fafb;
+        --text: #111827;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 32px auto;
+      }
+
+      header,
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: var(--panel);
+        box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+      }
+
+      header {
+        padding: 24px;
+        margin-bottom: 16px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(1.5rem, 3vw, 2.25rem);
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+        gap: 12px;
+        align-items: end;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: #374151;
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        color: var(--text);
+        font: inherit;
+      }
+
+      input[type="color"] {
+        width: 56px;
+        height: 42px;
+        padding: 4px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 10px;
+        background: var(--accent);
+        color: white;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+        padding: 11px 16px;
+      }
+
+      button.secondary {
+        border: 1px solid var(--border);
+        background: white;
+        color: var(--text);
+      }
+
+      .frame-wrap {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: white;
+      }
+
+      .notice {
+        display: none;
+        border: 1px solid #fed7aa;
+        border-radius: 12px;
+        background: #fff7ed;
+        color: #9a3412;
+        padding: 12px;
+        margin-bottom: 16px;
+      }
+
+      .notice strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      iframe {
+        display: block;
+        width: 100%;
+        min-height: 640px;
+        border: 0;
+      }
+
+      .log {
+        padding: 16px;
+        margin-top: 16px;
+      }
+
+      .log h2 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+      }
+
+      pre {
+        min-height: 88px;
+        max-height: 220px;
+        margin: 0;
+        overflow: auto;
+        border-radius: 10px;
+        background: #111827;
+        color: #f9fafb;
+        padding: 12px;
+        white-space: pre-wrap;
+      }
+
+      @media (max-width: 760px) {
+        .controls {
+          grid-template-columns: 1fr;
+        }
+
+        input[type="color"] {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Test iframe Élan</h1>
+        <p>
+          Page parent autonome pour tester le chargement iframe, les messages
+          <code>loop:resize</code> et le thème envoyé via <code>loop:set-theme</code>.
+        </p>
+      </header>
+
+      <section class="panel controls" aria-label="Contrôles iframe">
+        <label>
+          URL iframe
+          <input id="src" name="src" type="url" />
+        </label>
+        <label>
+          Accent
+          <input id="accent" name="accent" type="color" value="#ca2a3f" />
+        </label>
+        <button id="reload" type="button">Charger</button>
+        <button id="clear-demo" class="secondary" type="button">Quitter démo</button>
+        <button id="theme" class="secondary" type="button">Envoyer le thème</button>
+      </section>
+
+      <section id="file-warning" class="notice" aria-live="polite">
+        <strong>Ouvrez cette page via HTTP.</strong>
+        Le chargement depuis <code>file://</code> ne peut pas afficher l’app en iframe à cause de la
+        règle CSP <code>frame-ancestors</code>. Depuis la racine du dépôt :
+        <code>npm run dev:demo</code> puis
+        <code>http://localhost:4000/</code> (Élan sur <code>npm run dev</code>, port 3000).
+      </section>
+
+      <section class="frame-wrap" aria-label="Aperçu iframe">
+        <iframe
+          id="elan-frame"
+          title="Élan"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allow="storage-access *"
+        ></iframe>
+      </section>
+
+      <section class="panel log" aria-label="Messages iframe">
+        <h2>Messages reçus</h2>
+        <pre id="log">En attente de messages...</pre>
+      </section>
+    </main>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const isFilePage = window.location.protocol === "file:";
+      const elanOriginParam = params.get("elan")?.replace(/\/$/, "") ?? "";
+      const defaultElanOrigin = elanOriginParam || "http://localhost:3000";
+      const onElanDevServer =
+        !isFilePage &&
+        window.location.port === "3000" &&
+        window.location.pathname.endsWith("iframe-test.html");
+
+      function resolveDefaultSrc() {
+        if (isFilePage) return "";
+        if (onElanDevServer) return "/";
+        return `${defaultElanOrigin}/`;
+      }
+
+      const defaultSrc = resolveDefaultSrc();
+      const srcInput = document.querySelector("#src");
+      const accentInput = document.querySelector("#accent");
+      const iframe = document.querySelector("#elan-frame");
+      const fileWarning = document.querySelector("#file-warning");
+      const log = document.querySelector("#log");
+
+      function appendLog(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        const current = log.textContent === "En attente de messages..." ? "" : log.textContent;
+        log.textContent = `${current}[${timestamp}] ${message}\n`;
+      }
+
+      function elanOriginFromSrc(src) {
+        try {
+          return new URL(src, window.location.href).origin;
+        } catch {
+          return defaultElanOrigin;
+        }
+      }
+
+      function loadIframe() {
+        const src = srcInput.value.trim() || defaultSrc;
+        if (!src) {
+          showFileInstructions();
+          return;
+        }
+
+        iframe.removeAttribute("srcdoc");
+        iframe.src = src;
+        appendLog(`Chargement: ${iframe.src}`);
+      }
+
+      function clearDemoMode() {
+        const origin = elanOriginFromSrc(srcInput.value.trim() || defaultSrc);
+        srcInput.value = `${origin}/demo?clear=1`;
+        loadIframe();
+      }
+
+      function showFileInstructions() {
+        iframe.removeAttribute("src");
+        iframe.srcdoc = `
+          <!doctype html>
+          <html lang="fr">
+            <body style="margin:0;display:grid;min-height:640px;place-items:center;background:#fff7ed;color:#9a3412;font-family:system-ui,sans-serif;padding:24px;text-align:center">
+              <div>
+                <h2 style="margin:0 0 8px;font-size:20px">Ouvrez le test via Next</h2>
+                <p style="margin:0;line-height:1.5">
+                  Lancez <code>npm run dev:demo</code>, puis ouvrez<br />
+                  <code>http://localhost:4000/</code>.
+                </p>
+              </div>
+            </body>
+          </html>
+        `;
+        appendLog("Page ouverte en file:// : iframe localhost non chargee automatiquement.");
+      }
+
+      function sendTheme() {
+        iframe.contentWindow?.postMessage(
+          {
+            type: "loop:set-theme",
+            vars: {
+              "--loop-primary": accentInput.value,
+            },
+          },
+          "*",
+        );
+        appendLog(`Thème envoyé: ${accentInput.value}`);
+      }
+
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        appendLog(`${event.origin}: ${JSON.stringify(data)}`);
+
+        if (!data || data.type !== "loop:resize" || typeof data.height !== "number") return;
+        iframe.style.height = `${Math.max(400, data.height)}px`;
+      });
+
+      srcInput.value = params.get("src") || defaultSrc;
+      accentInput.value = params.get("accent") || accentInput.value;
+      fileWarning.style.display = isFilePage ? "block" : "none";
+
+      document.querySelector("#reload").addEventListener("click", loadIframe);
+      document.querySelector("#clear-demo").addEventListener("click", clearDemoMode);
+      document.querySelector("#theme").addEventListener("click", sendTheme);
+      accentInput.addEventListener("input", sendTheme);
+
+      loadIframe();
+    </script>
+  </body>
+</html>

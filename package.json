@@ -1,0 +1,58 @@
+{
+  "name": "@mariuslsr1/elan-parent-integration",
+  "version": "1.0.0",
+  "description": "Next.js parent-site module: reverse-proxy /elan, iframe shell, cookie consent, embed state",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mariusLSR1/elan-parent-integration.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mariusLSR1/elan-parent-integration/issues"
+  },
+  "homepage": "https://github.com/mariusLSR1/elan-parent-integration#readme",
+  "files": [
+    "*.ts",
+    "*.tsx",
+    "index.html",
+    "README.md",
+    "LICENSE",
+    ".env.example"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./rewrites": "./rewrites.ts",
+    "./ElanIframe": "./ElanIframe.tsx",
+    "./ElanEspaceShell": "./ElanEspaceShell.tsx",
+    "./ElanCookieConsent": "./ElanCookieConsent.tsx",
+    "./parent-embed-storage": "./parent-embed-storage.ts",
+    "./cookie-consent": "./cookie-consent.ts",
+    "./constants": "./constants.ts",
+    "./paths": "./paths.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev:demo": "npx --yes serve@14 -l 4000 --no-clipboard"
+  },
+  "peerDependencies": {
+    "next": ">=15.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
