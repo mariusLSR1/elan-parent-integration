@@ -23,6 +23,7 @@ import {
 } from "./parent-messages";
 import { ELAN_EMBED_CONSENT_EVENT } from "./cookie-consent";
 import { ElanParentSkeleton, skeletonVariantFromSnapshot } from "./ElanParentSkeleton";
+import { hasEmbedStorageConsent } from "./cookie-consent";
 import { elanProxiedPath } from "./paths";
 const RETRY_MIN_LOAD_MS = 2_500;
 /** Fallback if the iframe never posts `elan:embed-ready` (standalone / old builds). */
@@ -152,6 +153,29 @@ export function ElanIframe({
     refreshEmbedSnapshot();
   }, [refreshEmbedSnapshot]);
 
+  /** Re-sync session flag when the parent remounts the iframe (client navigation away/back). */
+  useEffect(() => {
+    if (!persistEmbedState || !hasEmbedStorageConsent()) return;
+
+    let cancelled = false;
+    const sessionProbeUrl = elanProxiedPath("/api/auth/session-visible");
+
+    void fetch(sessionProbeUrl, { credentials: "include", cache: "no-store" })
+      .then((res) => {
+        if (cancelled) return;
+        setParentEmbedSnapshot({ sessionActive: res.ok });
+        const stored = getParentEmbedSnapshot();
+        setEmbedSnapshot(snapshotWithResolvedAccent(stored, initialAccentRef.current));
+      })
+      .catch(() => {
+        /* keep stored snapshot */
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [persistEmbedState, retryCount]);
+
   useEffect(() => {
     function onConsentChange() {
       refreshEmbedSnapshot();
@@ -260,6 +284,7 @@ export function ElanIframe({
 
       if (isElanSessionMessage(d)) {
         setParentEmbedSnapshot({ sessionActive: d.active });
+        pushParentAccentToIframe();
         return;
       }
 
@@ -275,11 +300,12 @@ export function ElanIframe({
           const stored = getParentEmbedSnapshot();
           setEmbedSnapshot(snapshotWithResolvedAccent(stored, initialAccentRef.current));
         }
+        pushParentAccentToIframe();
       }
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [minHeight, persistEmbedState, finishLoading]);
+  }, [minHeight, persistEmbedState, finishLoading, pushParentAccentToIframe]);
 
   useEffect(() => {
     return () => {
