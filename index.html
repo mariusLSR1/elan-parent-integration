@@ -174,7 +174,7 @@
         <h1>Test iframe Élan</h1>
         <p>
           Page parent autonome pour tester le chargement iframe, les messages
-          <code>loop:resize</code> et le thème envoyé via <code>loop:set-theme</code>.
+          <code>elan:resize</code> et le thème envoyé via <code>elan:set-theme</code>.
         </p>
       </header>
 
@@ -293,9 +293,9 @@
       function sendTheme() {
         iframe.contentWindow?.postMessage(
           {
-            type: "loop:set-theme",
+            type: "elan:set-theme",
             vars: {
-              "--loop-primary": accentInput.value,
+              "--elan-primary": accentInput.value,
             },
           },
           "*",
@@ -307,7 +307,7 @@
         const data = event.data;
         appendLog(`${event.origin}: ${JSON.stringify(data)}`);
 
-        if (!data || data.type !== "loop:resize" || typeof data.height !== "number") return;
+        if (!data || data.type !== "elan:resize" || typeof data.height !== "number") return;
         iframe.style.height = `${Math.max(400, data.height)}px`;
       });
 

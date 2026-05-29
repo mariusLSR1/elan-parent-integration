@@ -1,6 +1,6 @@
 /**
  * Persist Élan iframe hints on the **parent** site (first-party cookies + localStorage fallback).
- * Updated when the iframe posts `loop:embed-state` (see {@link ElanIframe}).
+ * Updated when the iframe posts `elan:embed-state` (see {@link ElanIframe}).
  */
 
 import { hasEmbedStorageConsent } from "./cookie-consent";

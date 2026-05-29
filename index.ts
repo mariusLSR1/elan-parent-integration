@@ -33,11 +33,11 @@ export {
   type ParentEmbedSnapshot,
 } from "./parent-embed-storage";
 export {
-  LOOP_MSG_EMBED_READY,
-  LOOP_MSG_EMBED_STATE,
-  LOOP_MSG_RESIZE,
-  LOOP_MSG_SESSION,
-  type LoopEmbedStateParentMessage,
-  type LoopResizeMessage,
-  type LoopSessionParentMessage,
+  ELAN_MSG_EMBED_READY,
+  ELAN_MSG_EMBED_STATE,
+  ELAN_MSG_RESIZE,
+  ELAN_MSG_SESSION,
+  type ElanEmbedStateParentMessage,
+  type ElanResizeMessage,
+  type ElanSessionParentMessage,
 } from "./parent-messages";

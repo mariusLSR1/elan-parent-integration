@@ -1,43 +1,43 @@
 /** Must match Élan `lib/embed/parent-messages.ts` string values. */
-export const LOOP_MSG_RESIZE = "loop:resize" as const;
-export const LOOP_MSG_SESSION = "loop-session-state" as const;
-export const LOOP_MSG_EMBED_STATE = "loop:embed-state" as const;
-export const LOOP_MSG_EMBED_READY = "loop:embed-ready" as const;
+export const ELAN_MSG_RESIZE = "elan:resize" as const;
+export const ELAN_MSG_SESSION = "elan-session-state" as const;
+export const ELAN_MSG_EMBED_STATE = "elan:embed-state" as const;
+export const ELAN_MSG_EMBED_READY = "elan:embed-ready" as const;
 
-export type LoopResizeMessage = {
-  type: typeof LOOP_MSG_RESIZE;
+export type ElanResizeMessage = {
+  type: typeof ELAN_MSG_RESIZE;
   height: number;
 };
 
-export type LoopSessionParentMessage = {
-  type: typeof LOOP_MSG_SESSION;
+export type ElanSessionParentMessage = {
+  type: typeof ELAN_MSG_SESSION;
   active: boolean;
 };
 
-export type LoopEmbedStateParentMessage = {
-  type: typeof LOOP_MSG_EMBED_STATE;
+export type ElanEmbedStateParentMessage = {
+  type: typeof ELAN_MSG_EMBED_STATE;
   landingPath?: "/prof" | "/eleve" | "/admin";
   role?: "professor" | "student" | "admin";
   accent?: string | null;
   sessionActive?: boolean;
 };
 
-export function isLoopResizeMessage(data: unknown): data is LoopResizeMessage {
+export function isElanResizeMessage(data: unknown): data is ElanResizeMessage {
   if (!data || typeof data !== "object") return false;
-  const d = data as LoopResizeMessage;
-  return d.type === LOOP_MSG_RESIZE && typeof d.height === "number";
+  const d = data as ElanResizeMessage;
+  return d.type === ELAN_MSG_RESIZE && typeof d.height === "number";
 }
 
-export function isLoopSessionMessage(data: unknown): data is LoopSessionParentMessage {
+export function isElanSessionMessage(data: unknown): data is ElanSessionParentMessage {
   if (!data || typeof data !== "object") return false;
-  const d = data as LoopSessionParentMessage;
-  return d.type === LOOP_MSG_SESSION && typeof d.active === "boolean";
+  const d = data as ElanSessionParentMessage;
+  return d.type === ELAN_MSG_SESSION && typeof d.active === "boolean";
 }
 
-export function isLoopEmbedStateMessage(data: unknown): data is LoopEmbedStateParentMessage {
+export function isElanEmbedStateMessage(data: unknown): data is ElanEmbedStateParentMessage {
   if (!data || typeof data !== "object") return false;
-  const d = data as LoopEmbedStateParentMessage;
-  if (d.type !== LOOP_MSG_EMBED_STATE) return false;
+  const d = data as ElanEmbedStateParentMessage;
+  if (d.type !== ELAN_MSG_EMBED_STATE) return false;
   if (d.landingPath != null && d.landingPath !== "/prof" && d.landingPath !== "/eleve" && d.landingPath !== "/admin") {
     return false;
   }
@@ -45,7 +45,7 @@ export function isLoopEmbedStateMessage(data: unknown): data is LoopEmbedStatePa
   return true;
 }
 
-export function isLoopEmbedReadyMessage(data: unknown): boolean {
+export function isElanEmbedReadyMessage(data: unknown): boolean {
   if (!data || typeof data !== "object") return false;
-  return (data as { type?: string }).type === LOOP_MSG_EMBED_READY;
+  return (data as { type?: string }).type === ELAN_MSG_EMBED_READY;
 }

@@ -87,7 +87,7 @@ NEXT_PUBLIC_BASE_PATH=/elan npm run dev
 npm run dev:demo
 ```
 
-Open `http://localhost:4000/`. Allow `http://localhost:4000` in Élan `LOOP_FRAME_ANCESTORS`.
+Open `http://localhost:4000/`. Allow `http://localhost:4000` in Élan `ELAN_FRAME_ANCESTORS`.
 
 ## API
 

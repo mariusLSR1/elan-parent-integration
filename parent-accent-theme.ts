@@ -1,5 +1,5 @@
-/** Must match Élan `ThemeMessageBridge` (`loop:set-theme`). */
-export const LOOP_MSG_SET_THEME = "loop:set-theme" as const;
+/** Must match Élan `ThemeMessageBridge` (`elan:set-theme`). */
+export const ELAN_MSG_SET_THEME = "elan:set-theme" as const;
 
 export function hexToRgba(hex: string, alpha: number): string {
   const num = parseInt(hex.slice(1), 16);
@@ -19,8 +19,8 @@ export function darkenHex(hex: string, amount = 20): string {
 
 export function themeVarsFromAccent(accent: string): Record<string, string> {
   return {
-    "--loop-primary": accent,
-    "--loop-primary-hover": darkenHex(accent),
+    "--elan-primary": accent,
+    "--elan-primary-hover": darkenHex(accent),
   };
 }
 
@@ -33,7 +33,7 @@ export function postAccentThemeToIframe(
   if (!target || !targetOrigin) return;
   target.postMessage(
     {
-      type: LOOP_MSG_SET_THEME,
+      type: ELAN_MSG_SET_THEME,
       vars: themeVarsFromAccent(accent),
     },
     targetOrigin,

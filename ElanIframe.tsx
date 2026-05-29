@@ -16,16 +16,16 @@ import {
   type ParentEmbedSnapshot,
 } from "./parent-embed-storage";
 import {
-  isLoopEmbedReadyMessage,
-  isLoopEmbedStateMessage,
-  isLoopResizeMessage,
-  isLoopSessionMessage,
+  isElanEmbedReadyMessage,
+  isElanEmbedStateMessage,
+  isElanResizeMessage,
+  isElanSessionMessage,
 } from "./parent-messages";
 import { ELAN_EMBED_CONSENT_EVENT } from "./cookie-consent";
 import { ElanParentSkeleton, skeletonVariantFromSnapshot } from "./ElanParentSkeleton";
 import { elanProxiedPath } from "./paths";
 const RETRY_MIN_LOAD_MS = 2_500;
-/** Fallback if the iframe never posts `loop:embed-ready` (standalone / old builds). */
+/** Fallback if the iframe never posts `elan:embed-ready` (standalone / old builds). */
 const EMBED_READY_FALLBACK_MS = 20_000;
 
 type Phase = "loading" | "ready" | "error";
@@ -40,7 +40,7 @@ export type ElanIframeProps = {
   minHeight?: number;
   /**
    * When true (default), stores accent / landing path / session hints from the iframe
-   * in parent cookies (`elan_embed_v1`) on first `loop:embed-state` message.
+   * in parent cookies (`elan_embed_v1`) on first `elan:embed-state` message.
    */
   persistEmbedState?: boolean;
   /** Written on the parent before the first iframe response (e.g. brand accent `#rrggbb`). */
@@ -82,7 +82,7 @@ function delay(ms: number) {
 
 /**
  * Embeds Élan under the parent origin (e.g. `https://parent.com/elan/...`).
- * Height syncs when Élan posts `{ type: "loop:resize", height: number }`.
+ * Height syncs when Élan posts `{ type: "elan:resize", height: number }`.
  * Requires parent `next.config` rewrites from {@link elanProxyRewrites}.
  */
 function readEmbedSnapshotOnClient(
@@ -242,12 +242,12 @@ export function ElanIframe({
       if (!iframe || event.source !== iframe.contentWindow) return;
 
       const d = event.data;
-      if (isLoopResizeMessage(d)) {
+      if (isElanResizeMessage(d)) {
         iframe.style.height = `${Math.max(minHeight, d.height)}px`;
         return;
       }
 
-      if (isLoopEmbedReadyMessage(d)) {
+      if (isElanEmbedReadyMessage(d)) {
         if (embedReadyFallbackTimerRef.current) {
           clearTimeout(embedReadyFallbackTimerRef.current);
           embedReadyFallbackTimerRef.current = null;
@@ -258,12 +258,12 @@ export function ElanIframe({
 
       if (!persistEmbedState) return;
 
-      if (isLoopSessionMessage(d)) {
+      if (isElanSessionMessage(d)) {
         setParentEmbedSnapshot({ sessionActive: d.active });
         return;
       }
 
-      if (isLoopEmbedStateMessage(d)) {
+      if (isElanEmbedStateMessage(d)) {
         const parentAccent = normalizeAccent(initialAccentRef.current);
         setParentEmbedSnapshot({
           landingPath: d.landingPath,
