@@ -51,6 +51,10 @@ export type ElanIframeProps = {
   showSkeleton?: boolean;
   /** Override skeleton layout (otherwise inferred from stored embed snapshot). */
   skeletonVariant?: "prof" | "student" | "generic";
+  /**
+   * When true (default), the iframe height follows Élan content and only the parent page scrolls.
+   */
+  parentScroll?: boolean;
 };
 
 function ElanErrorFallback({ onRetry }: { onRetry: () => void }) {
@@ -123,6 +127,7 @@ export function ElanIframe({
   initialAccent,
   showSkeleton = true,
   skeletonVariant,
+  parentScroll = true,
 }: ElanIframeProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const initialAccentRef = useRef(initialAccent);
@@ -356,7 +361,7 @@ export function ElanIframe({
   }
 
   return (
-    <div className={cn("relative h-full w-full", wrapperClassName)}>
+    <div className={cn("relative w-full", wrapperClassName)}>
       {phase === "error" ? <ElanErrorFallback onRetry={handleRetry} /> : null}
 
       {showIframe ? (
@@ -369,7 +374,8 @@ export function ElanIframe({
             iframeClassName,
             phase !== "ready" && "pointer-events-none opacity-0",
           )}
-          style={{ minHeight }}
+          style={{ minHeight, display: "block" }}
+          scrolling={parentScroll ? "no" : undefined}
           loading="eager"
           referrerPolicy="no-referrer-when-downgrade"
           onLoad={handleIframeLoad}
@@ -381,6 +387,7 @@ export function ElanIframe({
           variant={resolvedSkeletonVariant}
           minHeight={minHeight}
           accent={loaderAccent}
+          parentScroll={parentScroll}
         />
       ) : null}
     </div>

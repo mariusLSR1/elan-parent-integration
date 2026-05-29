@@ -46,12 +46,22 @@ import { ElanEspaceShell } from "@mariuslsr1/elan-parent-integration/ElanEspaceS
 
 export default function EspaceElanPage() {
   return (
-    <main>
-      <ElanEspaceShell path="/" policyHref="/contact#mentions" />
-    </main>
+    <>
+      <YourSiteHeader />
+      <main className="w-full">
+        <ElanEspaceShell
+          path="/"
+          policyHref="/contact#mentions"
+          wrapperClassName="w-full"
+          iframeClassName="block w-full border-0"
+        />
+      </main>
+    </>
   );
 }
 ```
+
+**Single scrollbar (parent page only):** `ElanIframe` defaults to `parentScroll` — the iframe grows with Élan content (`elan:resize`) and only the parent window scrolls. Do not use `absolute inset-0` or `h-full` on the iframe wrapper.
 
 Or iframe only (no cookie banner):
 
