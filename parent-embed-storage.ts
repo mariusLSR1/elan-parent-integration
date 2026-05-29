@@ -155,5 +155,6 @@ export function resolveInitialEmbedPath(
   if (snapshot?.landingPath) {
     return snapshot.landingPath;
   }
-  return "/login";
+  /** Let Élan’s `/` route resolve session server-side (avoids false logout on reload). */
+  return "/";
 }

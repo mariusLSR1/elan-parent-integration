@@ -169,7 +169,11 @@ export function ElanIframe({
     void fetch(sessionProbeUrl, { credentials: "include", cache: "no-store" })
       .then((res) => {
         if (cancelled) return;
-        setParentEmbedSnapshot({ sessionActive: res.ok });
+        if (res.status === 401) {
+          setParentEmbedSnapshot({ sessionActive: false });
+        } else if (res.ok) {
+          setParentEmbedSnapshot({ sessionActive: true });
+        }
         const stored = getParentEmbedSnapshot();
         setEmbedSnapshot(snapshotWithResolvedAccent(stored, initialAccentRef.current));
         setSessionReady(true);

@@ -30,7 +30,7 @@ export function elanProxyRewrites(): ElanProxyRewrite[] {
   const prefix = elanProxiedPath("/").replace(/\/$/, "") || "/elan";
 
   return [
-    { source: prefix, destination: `${elanOrigin}${prefix}` },
+    { source: prefix, destination: `${elanOrigin}${prefix}/` },
     { source: `${prefix}/`, destination: `${elanOrigin}${prefix}/` },
     {
       source: `${prefix}/:path*`,
