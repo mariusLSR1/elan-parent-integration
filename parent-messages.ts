@@ -3,6 +3,7 @@ export const ELAN_MSG_RESIZE = "elan:resize" as const;
 export const ELAN_MSG_SESSION = "elan-session-state" as const;
 export const ELAN_MSG_EMBED_STATE = "elan:embed-state" as const;
 export const ELAN_MSG_EMBED_READY = "elan:embed-ready" as const;
+export const ELAN_MSG_REQUEST_THEME = "elan:request-theme" as const;
 
 export type ElanResizeMessage = {
   type: typeof ELAN_MSG_RESIZE;
@@ -48,4 +49,9 @@ export function isElanEmbedStateMessage(data: unknown): data is ElanEmbedStatePa
 export function isElanEmbedReadyMessage(data: unknown): boolean {
   if (!data || typeof data !== "object") return false;
   return (data as { type?: string }).type === ELAN_MSG_EMBED_READY;
+}
+
+export function isElanRequestThemeMessage(data: unknown): boolean {
+  if (!data || typeof data !== "object") return false;
+  return (data as { type?: string }).type === ELAN_MSG_REQUEST_THEME;
 }

@@ -140,14 +140,20 @@ export function elanIframeSrcWithSnapshot(
 }
 
 /**
- * When `path` is `/` and the user still has a session, open the last dashboard inside the iframe.
+ * When `path` is `/`, skip the marketing home: login when logged out, last dashboard when logged in.
  */
 export function resolveInitialEmbedPath(
   path: string,
   snapshot: ParentEmbedSnapshot | null,
 ): string {
-  if (path !== "/" || !snapshot?.landingPath || snapshot.sessionActive === false) {
+  if (path !== "/") {
     return path;
   }
-  return snapshot.landingPath;
+  if (snapshot?.sessionActive === false) {
+    return "/login";
+  }
+  if (snapshot?.landingPath) {
+    return snapshot.landingPath;
+  }
+  return "/login";
 }

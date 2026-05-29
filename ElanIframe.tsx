@@ -18,6 +18,7 @@ import {
 import {
   isElanEmbedReadyMessage,
   isElanEmbedStateMessage,
+  isElanRequestThemeMessage,
   isElanResizeMessage,
   isElanSessionMessage,
 } from "./parent-messages";
@@ -137,6 +138,7 @@ export function ElanIframe({
   const [embedSnapshot, setEmbedSnapshot] = useState<ParentEmbedSnapshot | null>(() =>
     readEmbedSnapshotOnClient(persistEmbedState, initialAccent),
   );
+  const [sessionReady, setSessionReady] = useState(() => !persistEmbedState);
 
   phaseRef.current = phase;
 
@@ -153,11 +155,15 @@ export function ElanIframe({
     refreshEmbedSnapshot();
   }, [refreshEmbedSnapshot]);
 
-  /** Re-sync session flag when the parent remounts the iframe (client navigation away/back). */
+  /** Probe session on parent origin before first iframe `src` (avoids stale `sessionActive: false` after logout). */
   useEffect(() => {
-    if (!persistEmbedState || !hasEmbedStorageConsent()) return;
+    if (!persistEmbedState || !hasEmbedStorageConsent()) {
+      setSessionReady(true);
+      return;
+    }
 
     let cancelled = false;
+    setSessionReady(false);
     const sessionProbeUrl = elanProxiedPath("/api/auth/session-visible");
 
     void fetch(sessionProbeUrl, { credentials: "include", cache: "no-store" })
@@ -166,9 +172,10 @@ export function ElanIframe({
         setParentEmbedSnapshot({ sessionActive: res.ok });
         const stored = getParentEmbedSnapshot();
         setEmbedSnapshot(snapshotWithResolvedAccent(stored, initialAccentRef.current));
+        setSessionReady(true);
       })
       .catch(() => {
-        /* keep stored snapshot */
+        if (!cancelled) setSessionReady(true);
       });
 
     return () => {
@@ -184,10 +191,10 @@ export function ElanIframe({
     return () => window.removeEventListener(ELAN_EMBED_CONSENT_EVENT, onConsentChange);
   }, [refreshEmbedSnapshot]);
 
-  const iframeSrc = useMemo(
-    () => buildIframeSrc(path, embedSnapshot, initialAccent, retryCount),
-    [path, embedSnapshot, initialAccent, retryCount],
-  );
+  const iframeSrc = useMemo(() => {
+    if (persistEmbedState && !sessionReady) return "";
+    return buildIframeSrc(path, embedSnapshot, initialAccent, retryCount);
+  }, [path, embedSnapshot, initialAccent, retryCount, persistEmbedState, sessionReady]);
 
   const pushParentAccentToIframe = useCallback(() => {
     const accent = resolveEmbedAccent(initialAccent, embedSnapshot);
@@ -199,7 +206,7 @@ export function ElanIframe({
     );
   }, [initialAccent, embedSnapshot, iframeSrc]);
 
-  const showIframe = phase !== "error";
+  const showIframe = phase !== "error" && Boolean(iframeSrc);
   const showParentSkeleton = showSkeleton && phase === "loading";
   const loaderAccent =
     resolveEmbedAccent(initialAccent, embedSnapshot) ?? SITE_BRAND_ACCENT;
@@ -277,6 +284,11 @@ export function ElanIframe({
           embedReadyFallbackTimerRef.current = null;
         }
         void finishLoading();
+        return;
+      }
+
+      if (isElanRequestThemeMessage(d)) {
+        pushParentAccentToIframe();
         return;
       }
 
