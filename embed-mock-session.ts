@@ -10,7 +10,7 @@ export function isDemoEmbedPath(path: string): boolean {
 
 /**
  * Clears mock/demo session cookies on the parent origin (proxied `/api/embed/exit-mock`).
- * Safe to call when leaving a demo embed or before loading the real espace iframe.
+ * Call before loading the real espace iframe — not when unmounting the demo iframe.
  */
 export async function clearEmbedMockSession(): Promise<void> {
   if (typeof window === "undefined") return;
@@ -39,17 +39,17 @@ function clearEmbedStorageInWindow(win: Window | null | undefined): void {
   }
 }
 
-function blankIframeElement(iframe: HTMLIFrameElement): void {
-  try {
-    iframe.src = "about:blank";
-  } catch {
-    /* ignore */
-  }
-}
-
-/** Stop network activity, drop mock embed storage, and release the iframe document. */
-export function teardownEmbedIframe(iframe: HTMLIFrameElement | null | undefined): void {
+/**
+ * Best-effort cleanup of embed storage inside a same-origin iframe.
+ * Does not navigate to `about:blank` — that leaves a visible empty document when React
+ * keeps the iframe mounted (Strict Mode remounts, fast route changes).
+ */
+export function clearEmbedIframeStorage(iframe: HTMLIFrameElement | null | undefined): void {
   if (!iframe) return;
   clearEmbedStorageInWindow(iframe.contentWindow);
-  blankIframeElement(iframe);
+}
+
+/** @deprecated Use {@link clearEmbedIframeStorage}. Never sets `about:blank`. */
+export function teardownEmbedIframe(iframe: HTMLIFrameElement | null | undefined): void {
+  clearEmbedIframeStorage(iframe);
 }

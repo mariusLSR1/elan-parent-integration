@@ -7,6 +7,7 @@ export {
 } from "./constants";
 export { elanProxiedPath } from "./paths";
 export {
+  clearEmbedIframeStorage,
   clearEmbedMockSession,
   isDemoEmbedPath,
   teardownEmbedIframe,

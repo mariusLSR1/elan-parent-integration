@@ -25,11 +25,7 @@ import {
 import { ELAN_EMBED_CONSENT_EVENT } from "./cookie-consent";
 import { ElanParentSkeleton, skeletonVariantFromSnapshot } from "./ElanParentSkeleton";
 import { hasEmbedStorageConsent } from "./cookie-consent";
-import {
-  clearEmbedMockSession,
-  isDemoEmbedPath,
-  teardownEmbedIframe,
-} from "./embed-mock-session";
+import { clearEmbedMockSession, isDemoEmbedPath } from "./embed-mock-session";
 import { elanProxiedPath } from "./paths";
 const RETRY_MIN_LOAD_MS = 2_500;
 /** Fallback if the iframe never posts `elan:embed-ready` (standalone / old builds). */
@@ -40,6 +36,23 @@ function embedReadyFallbackMs(iframeSrc: string): number {
   return iframeSrc.includes("embedLoader=parent")
     ? PARENT_LOADER_EMBED_READY_FALLBACK_MS
     : EMBED_READY_FALLBACK_MS;
+}
+
+function isBlankIframeNavigation(iframe: HTMLIFrameElement): boolean {
+  try {
+    const href = iframe.contentWindow?.location.href ?? "";
+    return href === "about:blank" || href === "";
+  } catch {
+    return false;
+  }
+}
+
+function isEmptyShellDocument(doc: Document): boolean {
+  if (isErrorPageDocument(doc)) return false;
+  const main = doc.querySelector("main");
+  if (main && main.children.length > 0) return false;
+  const text = (doc.body?.innerText ?? "").replace(/\s+/g, "").trim();
+  return text.length === 0;
 }
 
 type Phase = "loading" | "ready" | "error";
@@ -237,15 +250,6 @@ export function ElanIframe({
     };
   }, [persistEmbedState, retryCount]);
 
-  /** Tear down demo mock cookies and blank the iframe when leaving a demo embed page. */
-  useEffect(() => {
-    if (!isDemoEmbedPath(path)) return;
-    return () => {
-      teardownEmbedIframe(iframeRef.current);
-      void clearEmbedMockSession();
-    };
-  }, [path]);
-
   useEffect(() => {
     function onConsentChange() {
       refreshEmbedSnapshot();
@@ -284,9 +288,14 @@ export function ElanIframe({
     }
 
     try {
+      if (isBlankIframeNavigation(iframe)) {
+        return true;
+      }
       const doc = iframe.contentDocument;
-      if (doc && isErrorPageDocument(doc)) {
-        setPhase("error");
+      if (doc && (isErrorPageDocument(doc) || isEmptyShellDocument(doc))) {
+        if (isErrorPageDocument(doc)) {
+          setPhase("error");
+        }
         return true;
       }
     } catch {
@@ -387,7 +396,6 @@ export function ElanIframe({
       if (embedReadyFallbackTimerRef.current) {
         clearTimeout(embedReadyFallbackTimerRef.current);
       }
-      teardownEmbedIframe(iframeRef.current);
     };
   }, []);
 
@@ -397,6 +405,10 @@ export function ElanIframe({
   }, [phase, pushParentAccentToIframe]);
 
   function handleIframeLoad() {
+    const iframe = iframeRef.current;
+    if (!iframe || isBlankIframeNavigation(iframe)) {
+      return;
+    }
     pushParentAccentToIframe();
     if (embedReadyFallbackTimerRef.current) {
       clearTimeout(embedReadyFallbackTimerRef.current);
