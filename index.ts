@@ -6,6 +6,11 @@ export {
   type ElanButtonVariant,
 } from "./constants";
 export { elanProxiedPath } from "./paths";
+export {
+  clearEmbedMockSession,
+  isDemoEmbedPath,
+  teardownEmbedIframe,
+} from "./embed-mock-session";
 export { elanProxyRewrites, type ElanProxyRewrite } from "./rewrites";
 export { ElanIframe, type ElanIframeProps } from "./ElanIframe";
 export {

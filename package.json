@@ -1,6 +1,6 @@
 {
   "name": "@mariuslsr1/elan-parent-integration",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Next.js parent-site module: reverse-proxy /elan, iframe shell, cookie consent, embed state",
   "license": "MIT",
   "type": "module",
@@ -31,6 +31,7 @@
     "./cookie-consent": "./cookie-consent.ts",
     "./constants": "./constants.ts",
     "./paths": "./paths.ts",
+    "./embed-mock-session": "./embed-mock-session.ts",
     "./package.json": "./package.json"
   },
   "scripts": {

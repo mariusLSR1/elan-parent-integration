@@ -25,6 +25,11 @@ import {
 import { ELAN_EMBED_CONSENT_EVENT } from "./cookie-consent";
 import { ElanParentSkeleton, skeletonVariantFromSnapshot } from "./ElanParentSkeleton";
 import { hasEmbedStorageConsent } from "./cookie-consent";
+import {
+  clearEmbedMockSession,
+  isDemoEmbedPath,
+  teardownEmbedIframe,
+} from "./embed-mock-session";
 import { elanProxiedPath } from "./paths";
 const RETRY_MIN_LOAD_MS = 2_500;
 /** Fallback if the iframe never posts `elan:embed-ready` (standalone / old builds). */
@@ -195,7 +200,8 @@ export function ElanIframe({
     setSessionReady(false);
     const sessionProbeUrl = elanProxiedPath("/api/auth/session-visible");
 
-    void fetch(sessionProbeUrl, { credentials: "include", cache: "no-store" })
+    void clearEmbedMockSession()
+      .then(() => fetch(sessionProbeUrl, { credentials: "include", cache: "no-store" }))
       .then((res) => {
         if (cancelled) return;
         if (res.status === 401) {
@@ -215,6 +221,15 @@ export function ElanIframe({
       cancelled = true;
     };
   }, [persistEmbedState, retryCount]);
+
+  /** Tear down demo mock cookies and blank the iframe when leaving a demo embed page. */
+  useEffect(() => {
+    if (!isDemoEmbedPath(path)) return;
+    return () => {
+      teardownEmbedIframe(iframeRef.current);
+      void clearEmbedMockSession();
+    };
+  }, [path]);
 
   useEffect(() => {
     function onConsentChange() {
@@ -357,6 +372,7 @@ export function ElanIframe({
       if (embedReadyFallbackTimerRef.current) {
         clearTimeout(embedReadyFallbackTimerRef.current);
       }
+      teardownEmbedIframe(iframeRef.current);
     };
   }, []);
 
