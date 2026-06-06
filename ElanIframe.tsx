@@ -136,6 +136,9 @@ function buildIframeSrc(
   if (embedFillViewport) {
     src += "&embedFill=viewport";
   }
+  if (isDemoEmbedPath(path)) {
+    src += "&embedMode=demo";
+  }
   if (retryCount > 0) {
     src += `&_retry=${retryCount}`;
   }
