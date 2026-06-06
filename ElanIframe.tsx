@@ -60,6 +60,9 @@ type Phase = "loading" | "ready" | "error";
 /** How iframe height is managed on the parent page. */
 export type ElanIframeHeightMode = "viewport" | "content";
 
+/** Isolates mock vitrine (`demo`) from real account embed (`espace`). */
+export type ElanEmbedMode = "demo" | "espace";
+
 export type ElanIframeProps = {
   /** App path after the proxy prefix, e.g. `"/"` or `"/login"`. Always same-origin on the parent. */
   path?: string;
@@ -88,6 +91,11 @@ export type ElanIframeProps = {
    * @deprecated Use `heightMode`. `true` → `content`, `false` → `viewport`.
    */
   parentScroll?: boolean;
+  /**
+   * `demo`: mock data only (Découvrir la plateforme).
+   * `espace`: real login/account only (Mon espace). Default: `espace` when `persistEmbedState`, else `demo`.
+   */
+  embedMode?: ElanEmbedMode;
 };
 
 function resolveHeightMode(
@@ -141,23 +149,31 @@ function readEmbedSnapshotOnClient(
   return snapshotWithResolvedAccent(stored, initialAccent);
 }
 
+function resolveEmbedMode(
+  explicit: ElanEmbedMode | undefined,
+  path: string,
+  persistEmbedState: boolean,
+): ElanEmbedMode {
+  if (explicit) return explicit;
+  if (isDemoEmbedPath(path)) return "demo";
+  return persistEmbedState ? "espace" : "demo";
+}
+
 function buildIframeSrc(
   path: string,
   snapshot: ParentEmbedSnapshot | null,
   initialAccent: string | undefined,
   retryCount: number,
   embedFillViewport: boolean,
+  embedMode: ElanEmbedMode,
 ): string {
   const merged = snapshotWithResolvedAccent(snapshot, initialAccent);
   const appPath = resolveInitialEmbedPath(path, merged);
   let src = elanIframeSrcWithSnapshot(elanProxiedPath(appPath), merged, initialAccent);
   const sep = src.includes("?") ? "&" : "?";
-  src += `${sep}embedLoader=parent`;
+  src += `${sep}embedLoader=parent&embedMode=${embedMode}`;
   if (embedFillViewport) {
     src += "&embedFill=viewport";
-  }
-  if (isDemoEmbedPath(path)) {
-    src += "&embedMode=demo";
   }
   if (retryCount > 0) {
     src += `&_retry=${retryCount}`;
@@ -177,8 +193,10 @@ export function ElanIframe({
   skeletonVariant,
   heightMode,
   parentScroll,
+  embedMode: embedModeProp,
 }: ElanIframeProps) {
   const resolvedHeightMode = resolveHeightMode(heightMode, parentScroll);
+  const resolvedEmbedMode = resolveEmbedMode(embedModeProp, path, persistEmbedState);
   const syncContentHeight = resolvedHeightMode === "content";
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -260,8 +278,24 @@ export function ElanIframe({
 
   const iframeSrc = useMemo(() => {
     if (persistEmbedState && !sessionReady) return "";
-    return buildIframeSrc(path, embedSnapshot, initialAccent, retryCount, !syncContentHeight);
-  }, [path, embedSnapshot, initialAccent, retryCount, persistEmbedState, sessionReady, syncContentHeight]);
+    return buildIframeSrc(
+      path,
+      embedSnapshot,
+      initialAccent,
+      retryCount,
+      !syncContentHeight,
+      resolvedEmbedMode,
+    );
+  }, [
+    path,
+    embedSnapshot,
+    initialAccent,
+    retryCount,
+    persistEmbedState,
+    sessionReady,
+    syncContentHeight,
+    resolvedEmbedMode,
+  ]);
 
   const pushParentAccentToIframe = useCallback(() => {
     const accent = resolveEmbedAccent(initialAccent, embedSnapshot);
