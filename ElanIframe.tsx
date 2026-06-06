@@ -196,14 +196,18 @@ export function ElanIframe({
       return;
     }
 
-    let cancelled = false;
+    let active = true;
     setSessionReady(false);
     const sessionProbeUrl = elanProxiedPath("/api/auth/session-visible");
 
-    void clearEmbedMockSession()
-      .then(() => fetch(sessionProbeUrl, { credentials: "include", cache: "no-store" }))
-      .then((res) => {
-        if (cancelled) return;
+    void (async () => {
+      try {
+        await clearEmbedMockSession();
+        const res = await fetch(sessionProbeUrl, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!active) return;
         if (res.status === 401) {
           setParentEmbedSnapshot({ sessionActive: false });
         } else if (res.ok) {
@@ -211,14 +215,15 @@ export function ElanIframe({
         }
         const stored = getParentEmbedSnapshot();
         setEmbedSnapshot(snapshotWithResolvedAccent(stored, initialAccentRef.current));
-        setSessionReady(true);
-      })
-      .catch(() => {
-        if (!cancelled) setSessionReady(true);
-      });
+      } catch {
+        /* probe unavailable — still mount iframe */
+      } finally {
+        if (active) setSessionReady(true);
+      }
+    })();
 
     return () => {
-      cancelled = true;
+      active = false;
     };
   }, [persistEmbedState, retryCount]);
 
