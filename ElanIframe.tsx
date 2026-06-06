@@ -121,12 +121,16 @@ function buildIframeSrc(
   snapshot: ParentEmbedSnapshot | null,
   initialAccent: string | undefined,
   retryCount: number,
+  embedFillViewport: boolean,
 ): string {
   const merged = snapshotWithResolvedAccent(snapshot, initialAccent);
   const appPath = resolveInitialEmbedPath(path, merged);
   let src = elanIframeSrcWithSnapshot(elanProxiedPath(appPath), merged, initialAccent);
   const sep = src.includes("?") ? "&" : "?";
   src += `${sep}embedLoader=parent`;
+  if (embedFillViewport) {
+    src += "&embedFill=viewport";
+  }
   if (retryCount > 0) {
     src += `&_retry=${retryCount}`;
   }
@@ -222,8 +226,8 @@ export function ElanIframe({
 
   const iframeSrc = useMemo(() => {
     if (persistEmbedState && !sessionReady) return "";
-    return buildIframeSrc(path, embedSnapshot, initialAccent, retryCount);
-  }, [path, embedSnapshot, initialAccent, retryCount, persistEmbedState, sessionReady]);
+    return buildIframeSrc(path, embedSnapshot, initialAccent, retryCount, !syncContentHeight);
+  }, [path, embedSnapshot, initialAccent, retryCount, persistEmbedState, sessionReady, syncContentHeight]);
 
   const pushParentAccentToIframe = useCallback(() => {
     const accent = resolveEmbedAccent(initialAccent, embedSnapshot);
@@ -384,7 +388,7 @@ export function ElanIframe({
     <div
       className={cn(
         "relative w-full",
-        !syncContentHeight && "flex min-h-0 flex-1 flex-col",
+        !syncContentHeight && "min-h-0 flex-1",
         wrapperClassName,
       )}
     >
@@ -398,14 +402,13 @@ export function ElanIframe({
           title={title}
           className={cn(
             iframeClassName,
-            !syncContentHeight && "min-h-0 flex-1",
+            !syncContentHeight && "absolute inset-0 h-full w-full",
             phase !== "ready" && "pointer-events-none opacity-0",
           )}
           style={{
             display: "block",
-            ...(syncContentHeight
-              ? { minHeight }
-              : { height: "100%", minHeight: 0 }),
+            border: 0,
+            ...(syncContentHeight ? { minHeight } : undefined),
           }}
           scrolling={syncContentHeight ? "no" : undefined}
           loading="eager"

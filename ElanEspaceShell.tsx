@@ -6,7 +6,7 @@ import {
   ELAN_EMBED_CONSENT_EVENT,
   hasEmbedStorageConsent,
 } from "./cookie-consent";
-import { SITE_BRAND_ACCENT } from "./constants";
+import { cn, SITE_BRAND_ACCENT } from "./constants";
 import { ElanCookieConsent } from "./ElanCookieConsent";
 import { ElanIframe, type ElanIframeProps } from "./ElanIframe";
 
@@ -34,7 +34,12 @@ export function ElanEspaceShell({
   );
 
   return (
-    <>
+    <div
+      className={cn(
+        "flex flex-col",
+        canLoadIframe && "min-h-0 flex-1",
+      )}
+    >
       <ElanCookieConsent policyHref={policyHref} />
       {canLoadIframe ? (
         <ElanIframe
@@ -43,6 +48,6 @@ export function ElanEspaceShell({
           persistEmbedState
         />
       ) : null}
-    </>
+    </div>
   );
 }
