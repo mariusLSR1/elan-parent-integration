@@ -11,8 +11,10 @@ type ElanParentSkeletonProps = {
   className?: string;
   /** Brand accent (`#rrggbb`) for the centered loader ring. */
   accent?: string;
-  /** Match {@link ElanIframeProps.parentScroll} — no inner scroll while loading. */
+  /** @deprecated Use `fillViewport`. */
   parentScroll?: boolean;
+  /** Fill the iframe wrapper (viewport height mode). */
+  fillViewport?: boolean;
 };
 
 type ElanAccentLoaderProps = {
@@ -115,7 +117,8 @@ export function ElanParentSkeleton({
   minHeight = 400,
   className,
   accent,
-  parentScroll = true,
+  parentScroll,
+  fillViewport = parentScroll === undefined ? true : !parentScroll,
 }: ElanParentSkeletonProps) {
   const body =
     variant === "student" ? (
@@ -130,10 +133,10 @@ export function ElanParentSkeleton({
     <div
       className={cn(
         "absolute inset-0 z-10 bg-background",
-        parentScroll ? "overflow-hidden" : "overflow-auto",
+        fillViewport ? "overflow-hidden" : "overflow-auto",
         className,
       )}
-      style={{ minHeight }}
+      style={fillViewport ? undefined : { minHeight }}
       role="status"
       aria-live="polite"
       aria-busy="true"

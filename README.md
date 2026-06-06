@@ -35,7 +35,7 @@ Copy `.env.example` to `.env.local`:
 | Variable | Required | Role |
 |----------|----------|------|
 | `ELAN_ORIGIN` | Yes (prod) | Élan deployment origin for rewrites (no trailing slash) |
-| `NEXT_PUBLIC_SITE_BRAND_ACCENT` | No | Default iframe accent (`#E8620A`) |
+| `NEXT_PUBLIC_SITE_BRAND_ACCENT` | No | Accent sent via `elan:set-theme` (`#E8620A`) — **not** in the iframe URL |
 
 ## Page setup
 
@@ -61,7 +61,22 @@ export default function EspaceElanPage() {
 }
 ```
 
-**Single scrollbar (parent page only):** `ElanIframe` defaults to `parentScroll` — the iframe grows with Élan content (`elan:resize`) and only the parent window scrolls. Do not use `absolute inset-0` or `h-full` on the iframe wrapper.
+**Viewport fill (default):** `heightMode="viewport"` — the iframe fills the area below your site header; Élan scrolls inside the iframe. Accent is sent with `elan:set-theme` (postMessage), never `?accent=` in the URL.
+
+```tsx
+<div className="flex min-h-dvh flex-col">
+  <YourSiteHeader />
+  <main className="flex min-h-0 flex-1 flex-col">
+    <ElanEspaceShell
+      path="/"
+      wrapperClassName="flex min-h-0 flex-1 flex-col"
+      iframeClassName="min-h-0 flex-1 w-full border-0"
+    />
+  </main>
+</div>
+```
+
+**Content height (optional):** `heightMode="content"` — listen to `elan:resize`, grow the iframe, parent page scrolls.
 
 Or iframe only (no cookie banner):
 

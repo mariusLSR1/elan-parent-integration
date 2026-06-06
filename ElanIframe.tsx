@@ -32,30 +32,47 @@ const EMBED_READY_FALLBACK_MS = 20_000;
 
 type Phase = "loading" | "ready" | "error";
 
+/** How iframe height is managed on the parent page. */
+export type ElanIframeHeightMode = "viewport" | "content";
+
 export type ElanIframeProps = {
   /** App path after the proxy prefix, e.g. `"/"` or `"/login"`. Always same-origin on the parent. */
   path?: string;
   title?: string;
   wrapperClassName?: string;
   iframeClassName?: string;
-  /** Minimum height before first resize message */
+  /** Minimum height before first resize message (content mode only). */
   minHeight?: number;
   /**
    * When true (default), stores accent / landing path / session hints from the iframe
    * in parent cookies (`elan_embed_v1`) on first `elan:embed-state` message.
    */
   persistEmbedState?: boolean;
-  /** Written on the parent before the first iframe response (e.g. brand accent `#rrggbb`). */
+  /** Brand accent (`#rrggbb`) sent via `elan:set-theme`, never in the iframe URL. */
   initialAccent?: string;
   /** Show a layout skeleton on the parent while the iframe loads. Default true. */
   showSkeleton?: boolean;
   /** Override skeleton layout (otherwise inferred from stored embed snapshot). */
   skeletonVariant?: "prof" | "student" | "generic";
   /**
-   * When true (default), the iframe height follows Élan content and only the parent page scrolls.
+   * `viewport` (default): iframe fills its flex wrapper; Élan scrolls inside the iframe.
+   * `content`: iframe height follows `elan:resize`; parent page scrolls.
+   */
+  heightMode?: ElanIframeHeightMode;
+  /**
+   * @deprecated Use `heightMode`. `true` → `content`, `false` → `viewport`.
    */
   parentScroll?: boolean;
 };
+
+function resolveHeightMode(
+  heightMode: ElanIframeHeightMode | undefined,
+  parentScroll: boolean | undefined,
+): ElanIframeHeightMode {
+  if (heightMode) return heightMode;
+  if (parentScroll === true) return "content";
+  return "viewport";
+}
 
 function ElanErrorFallback({ onRetry }: { onRetry: () => void }) {
   return (
@@ -88,8 +105,7 @@ function delay(ms: number) {
 
 /**
  * Embeds Élan under the parent origin (e.g. `https://parent.com/elan/...`).
- * Height syncs when Élan posts `{ type: "elan:resize", height: number }`.
- * Requires parent `next.config` rewrites from {@link elanProxyRewrites}.
+ * Accent via `elan:set-theme` (postMessage). Requires parent `next.config` rewrites from {@link elanProxyRewrites}.
  */
 function readEmbedSnapshotOnClient(
   persistEmbedState: boolean,
@@ -127,8 +143,12 @@ export function ElanIframe({
   initialAccent,
   showSkeleton = true,
   skeletonVariant,
-  parentScroll = true,
+  heightMode,
+  parentScroll,
 }: ElanIframeProps) {
+  const resolvedHeightMode = resolveHeightMode(heightMode, parentScroll);
+  const syncContentHeight = resolvedHeightMode === "content";
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const initialAccentRef = useRef(initialAccent);
   initialAccentRef.current = initialAccent;
@@ -282,7 +302,7 @@ export function ElanIframe({
       if (!iframe || event.source !== iframe.contentWindow) return;
 
       const d = event.data;
-      if (isElanResizeMessage(d)) {
+      if (syncContentHeight && isElanResizeMessage(d)) {
         iframe.style.height = `${Math.max(minHeight, d.height)}px`;
         return;
       }
@@ -326,7 +346,7 @@ export function ElanIframe({
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [minHeight, persistEmbedState, finishLoading, pushParentAccentToIframe]);
+  }, [minHeight, persistEmbedState, finishLoading, pushParentAccentToIframe, syncContentHeight]);
 
   useEffect(() => {
     return () => {
@@ -361,7 +381,13 @@ export function ElanIframe({
   }
 
   return (
-    <div className={cn("relative w-full", wrapperClassName)}>
+    <div
+      className={cn(
+        "relative w-full",
+        !syncContentHeight && "flex min-h-0 flex-1 flex-col",
+        wrapperClassName,
+      )}
+    >
       {phase === "error" ? <ElanErrorFallback onRetry={handleRetry} /> : null}
 
       {showIframe ? (
@@ -372,10 +398,16 @@ export function ElanIframe({
           title={title}
           className={cn(
             iframeClassName,
+            !syncContentHeight && "min-h-0 flex-1",
             phase !== "ready" && "pointer-events-none opacity-0",
           )}
-          style={{ minHeight, display: "block" }}
-          scrolling={parentScroll ? "no" : undefined}
+          style={{
+            display: "block",
+            ...(syncContentHeight
+              ? { minHeight }
+              : { height: "100%", minHeight: 0 }),
+          }}
+          scrolling={syncContentHeight ? "no" : undefined}
           loading="eager"
           referrerPolicy="no-referrer-when-downgrade"
           onLoad={handleIframeLoad}
@@ -385,9 +417,9 @@ export function ElanIframe({
       {showParentSkeleton ? (
         <ElanParentSkeleton
           variant={resolvedSkeletonVariant}
-          minHeight={minHeight}
+          minHeight={syncContentHeight ? minHeight : undefined}
           accent={loaderAccent}
-          parentScroll={parentScroll}
+          fillViewport={!syncContentHeight}
         />
       ) : null}
     </div>

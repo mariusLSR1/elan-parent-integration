@@ -7,7 +7,7 @@ export const ELAN_PROXY_BASE_PATH = "/elan";
 const DEFAULT_SITE_BRAND_ACCENT = "#E8620A";
 
 /**
- * Brand accent passed to the Élan iframe (`?accent=`).
+ * Brand accent sent to Élan via `elan:set-theme` (postMessage), not in the iframe URL.
  * Set `NEXT_PUBLIC_SITE_BRAND_ACCENT` in `.env.local` (hex, e.g. `#E8620A`).
  */
 export const SITE_BRAND_ACCENT =

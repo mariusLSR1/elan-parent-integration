@@ -312,7 +312,7 @@
       });
 
       srcInput.value = params.get("src") || defaultSrc;
-      accentInput.value = params.get("accent") || accentInput.value;
+      accentInput.value = accentInput.value;
       fileWarning.style.display = isFilePage ? "block" : "none";
 
       document.querySelector("#reload").addEventListener("click", loadIframe);

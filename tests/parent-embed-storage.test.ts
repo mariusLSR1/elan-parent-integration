@@ -34,14 +34,15 @@ describe("parent-embed-storage", () => {
     expect(snap?.sessionActive).toBe(true);
   });
 
-  it("appends accent to proxied iframe src", () => {
+  it("does not append accent to proxied iframe src (postMessage only)", () => {
     const src = elanIframeSrcWithSnapshot("/elan/prof", {
       landingPath: "/prof",
       role: "professor",
       accent: "#aabbcc",
       updatedAt: Date.now(),
     });
-    expect(src).toContain("accent=%23aabbcc");
+    expect(src).toBe("/elan/prof");
+    expect(src).not.toContain("accent=");
   });
 
   it("prefers parent initialAccent over stored snapshot accent", () => {
@@ -53,14 +54,14 @@ describe("parent-embed-storage", () => {
       { accent: "#aabbcc", updatedAt: Date.now() },
       "#E8620A",
     );
-    expect(src).toContain("accent=%23E8620A");
+    expect(src).toBe("/elan/prof");
   });
 
   it("uses initialAccent when snapshot has no accent", () => {
     const merged = snapshotWithResolvedAccent(null, "#112233");
     expect(merged?.accent).toBe("#112233");
     const src = elanIframeSrcWithSnapshot("/elan/", null, "#112233");
-    expect(src).toContain("accent=%23112233");
+    expect(src).toBe("/elan/");
   });
 
   it("resolves initial path from snapshot when session active", () => {

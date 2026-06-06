@@ -127,16 +127,16 @@ export function snapshotWithResolvedAccent(
   };
 }
 
-/** Append `accent` query param from parent brand and/or stored snapshot. */
+/**
+ * Build proxied iframe `src`. Accent is **not** appended to the URL — the parent sends
+ * `elan:set-theme` via postMessage (see {@link postAccentThemeToIframe}).
+ */
 export function elanIframeSrcWithSnapshot(
   proxiedPath: string,
-  snapshot: ParentEmbedSnapshot | null,
-  initialAccent?: string,
+  _snapshot: ParentEmbedSnapshot | null,
+  _initialAccent?: string,
 ): string {
-  const accent = resolveEmbedAccent(initialAccent, snapshot);
-  if (!accent) return proxiedPath;
-  const sep = proxiedPath.includes("?") ? "&" : "?";
-  return `${proxiedPath}${sep}accent=${encodeURIComponent(accent)}`;
+  return proxiedPath;
 }
 
 /**
