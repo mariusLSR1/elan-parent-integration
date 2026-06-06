@@ -34,6 +34,13 @@ import { elanProxiedPath } from "./paths";
 const RETRY_MIN_LOAD_MS = 2_500;
 /** Fallback if the iframe never posts `elan:embed-ready` (standalone / old builds). */
 const EMBED_READY_FALLBACK_MS = 20_000;
+const PARENT_LOADER_EMBED_READY_FALLBACK_MS = 2_500;
+
+function embedReadyFallbackMs(iframeSrc: string): number {
+  return iframeSrc.includes("embedLoader=parent")
+    ? PARENT_LOADER_EMBED_READY_FALLBACK_MS
+    : EMBED_READY_FALLBACK_MS;
+}
 
 type Phase = "loading" | "ready" | "error";
 
@@ -394,12 +401,13 @@ export function ElanIframe({
     if (embedReadyFallbackTimerRef.current) {
       clearTimeout(embedReadyFallbackTimerRef.current);
     }
+    const fallbackMs = embedReadyFallbackMs(iframeSrc);
     embedReadyFallbackTimerRef.current = setTimeout(() => {
       embedReadyFallbackTimerRef.current = null;
       if (phaseRef.current === "loading") {
         void finishLoading();
       }
-    }, EMBED_READY_FALLBACK_MS);
+    }, fallbackMs);
   }
 
   function handleRetry() {
@@ -427,7 +435,7 @@ export function ElanIframe({
           className={cn(
             iframeClassName,
             !syncContentHeight && "absolute inset-0 h-full w-full",
-            phase !== "ready" && "pointer-events-none opacity-0",
+            phase !== "ready" && "pointer-events-none",
           )}
           style={{
             display: "block",
