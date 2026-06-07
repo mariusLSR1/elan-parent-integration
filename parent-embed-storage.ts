@@ -155,6 +155,9 @@ export function resolveInitialEmbedPath(
   if (snapshot?.landingPath) {
     return snapshot.landingPath;
   }
-  /** Let Élan’s `/` route resolve session server-side (avoids false logout on reload). */
-  return "/";
+  /**
+   * Default embed entry: `/login` (authenticated users are redirected server-side).
+   * Avoids `/elan` ↔ `/elan/` 308 loops through the parent reverse proxy.
+   */
+  return "/login";
 }

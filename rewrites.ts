@@ -29,9 +29,15 @@ export function elanProxyRewrites(): ElanProxyRewrite[] {
 
   const prefix = elanProxiedPath("/").replace(/\/$/, "") || "/elan";
 
+  /**
+   * Élan serves `/elan` (200) but 308-redirects `/elan/` → `/elan`. Proxying to
+   * `${prefix}/` makes the browser follow that redirect on the parent origin and loop.
+   */
+  const elanBase = `${elanOrigin}${prefix}`;
+
   return [
-    { source: prefix, destination: `${elanOrigin}${prefix}/` },
-    { source: `${prefix}/`, destination: `${elanOrigin}${prefix}/` },
+    { source: prefix, destination: elanBase },
+    { source: `${prefix}/`, destination: elanBase },
     {
       source: `${prefix}/:path*`,
       destination: `${elanOrigin}${prefix}/:path*`,

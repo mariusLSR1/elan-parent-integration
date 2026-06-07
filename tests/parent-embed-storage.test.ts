@@ -79,7 +79,7 @@ describe("parent-embed-storage", () => {
         updatedAt: Date.now(),
       }),
     ).toBe("/login");
-    expect(resolveInitialEmbedPath("/", null)).toBe("/");
+    expect(resolveInitialEmbedPath("/", null)).toBe("/login");
   });
 
   it("rejects invalid accent", () => {
