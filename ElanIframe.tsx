@@ -213,6 +213,8 @@ export function ElanIframe({
   const [embedSnapshot, setEmbedSnapshot] = useState<ParentEmbedSnapshot | null>(() =>
     readEmbedSnapshotOnClient(persistEmbedState, initialAccent),
   );
+  /** Snapshot used for the iframe `src` — frozen after mount so logout/login does not remount. */
+  const [iframeEntrySnapshot, setIframeEntrySnapshot] = useState<ParentEmbedSnapshot | null>(null);
   const [sessionReady, setSessionReady] = useState(() => !persistEmbedState);
 
   phaseRef.current = phase;
@@ -255,7 +257,9 @@ export function ElanIframe({
           setParentEmbedSnapshot({ sessionActive: true });
         }
         const stored = getParentEmbedSnapshot();
-        setEmbedSnapshot(snapshotWithResolvedAccent(stored, initialAccentRef.current));
+        const merged = snapshotWithResolvedAccent(stored, initialAccentRef.current);
+        setEmbedSnapshot(merged);
+        setIframeEntrySnapshot(merged);
       } catch {
         /* probe unavailable — still mount iframe */
       } finally {
@@ -278,9 +282,13 @@ export function ElanIframe({
 
   const iframeSrc = useMemo(() => {
     if (persistEmbedState && !sessionReady) return "";
+    const srcSnapshot =
+      iframeEntrySnapshot ??
+      (persistEmbedState ? null : embedSnapshot) ??
+      embedSnapshot;
     return buildIframeSrc(
       path,
-      embedSnapshot,
+      srcSnapshot,
       initialAccent,
       retryCount,
       !syncContentHeight,
@@ -289,6 +297,7 @@ export function ElanIframe({
   }, [
     path,
     embedSnapshot,
+    iframeEntrySnapshot,
     initialAccent,
     retryCount,
     persistEmbedState,
@@ -414,10 +423,8 @@ export function ElanIframe({
           accent: parentAccent ?? normalizeAccent(d.accent ?? undefined),
           sessionActive: d.sessionActive,
         });
-        if (phaseRef.current === "loading") {
-          const stored = getParentEmbedSnapshot();
-          setEmbedSnapshot(snapshotWithResolvedAccent(stored, initialAccentRef.current));
-        }
+        const stored = getParentEmbedSnapshot();
+        setEmbedSnapshot(snapshotWithResolvedAccent(stored, initialAccentRef.current));
         pushParentAccentToIframe();
       }
     }
@@ -458,6 +465,10 @@ export function ElanIframe({
 
   function handleRetry() {
     isRetryAttemptRef.current = true;
+    const stored = persistEmbedState ? getParentEmbedSnapshot() : null;
+    const merged = snapshotWithResolvedAccent(stored, initialAccentRef.current);
+    setEmbedSnapshot(merged);
+    setIframeEntrySnapshot(merged);
     setRetryCount((n) => n + 1);
     beginLoad();
   }
